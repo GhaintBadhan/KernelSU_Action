@@ -154,7 +154,7 @@ jobs:
         run: |
           # LTO links are memory-hungry and the runner has 16GB; a swap file is
           # cheaper and more predictable than an unpinned third-party action.
-          sudo fallocate -l 8G /mnt/swapfile
+          sudo fallocate -l 16G /mnt/swapfile
           sudo chmod 600 /mnt/swapfile
           sudo mkswap /mnt/swapfile
           sudo swapon /mnt/swapfile
