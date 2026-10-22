@@ -78,7 +78,7 @@ path_umount:     { required: false, default: "config",     type: string }
 hide_stuff:      { required: false, default: "config",     type: string }
 kpm:             { required: false, default: "config",     type: string }
 extra_defconfig: { required: false, default: "",           type: string }
-Only one build per ref at a time; a newer run supersedes an older one.
+#Only one build per ref at a time; a newer run supersedes an older one.
 concurrency:
 group: build-kernel-{{ github.ref }}-{{ inputs.config }}
 cancel-in-progress: true
