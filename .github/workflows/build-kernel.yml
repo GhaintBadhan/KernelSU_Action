@@ -130,6 +130,14 @@ jobs:
       - name: Resolve configuration
         run: bash scripts/config.sh
 
+      - name: Free Up space
+        run: |
+          rm -rf kernel_workspace/android-kernel/out
+          # Clear ccache if it's storing corrupted object states
+          if command -v ccache &> /dev/null; then
+            ccache -C || true
+          fi
+
       - name: Free up disk space
         if: env.REMOVE_UNUSED_PACKAGES == 'true'
         uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
@@ -179,7 +187,7 @@ jobs:
         run: bash scripts/patches.sh all
 
       - name: Set up ccache
-        if: env.ENABLE_CCACHE == 'true'
+        if: env.ENABLE_CCACHE == 'false'
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: kernel-${{ env.DEVICE }}-${{ env.KSU_VARIANT }}-${{ env.KERNEL_VERSION }}
@@ -231,22 +239,6 @@ jobs:
           name: boot${{ env.LOCALVERSION }}${{ env.UPLOADNAME }}-${{ env.DEVICE }}-${{ env.BUILD_TIME }}
           path: kernel_workspace/boot.img
 
-  # Publishing is a separate job so the build itself runs with a read-only
-  # token; only this job gets contents:write, and only when asked for.
-  release:
-    name: Publish release
-    needs: build
-    if: inputs.publish_release
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-          merge-multiple: false
-
       - name: Package AnyKernel3 as a flashable zip
         run: |
           mkdir -p release
@@ -259,20 +251,6 @@ jobs:
           for f in artifacts/*/Image* artifacts/*/boot.img artifacts/*/dtbo.img; do
             [ -f "$f" ] && cp "$f" release/
           done
-          ls -la release/
-
-      - name: Create release
-        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
-        with:
-          tag_name: ${{ needs.build.outputs.device }}-${{ needs.build.outputs.build_time }}
-          name: ${{ needs.build.outputs.device }} · ${{ needs.build.outputs.ksu_name }} · ${{ needs.build.outputs.build_time }}
-          body: |
-            | | |
-            | --- | --- |
-            | Device | `${{ needs.build.outputs.device }}` |
-            | Kernel | `${{ needs.build.outputs.kernel_release }}` |
-            | KernelSU | `${{ needs.build.outputs.ksu_name }}` @ `${{ needs.build.outputs.ksu_version }}` |
-            | SUSFS | `${{ needs.build.outputs.susfs_version || 'not applied' }}` |
 
             Flash the AnyKernel3 zip from a custom recovery.
           files: release/*
