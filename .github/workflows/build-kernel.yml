@@ -232,6 +232,13 @@ jobs:
           name: dtbo-${{ env.DEVICE }}-${{ env.BUILD_TIME }}
           path: kernel_workspace/android-kernel/out/arch/${{ env.ARCH }}/boot/dtbo.img
 
+      - name: Upload DTB image
+        if: env.CHECK_DTB_IS_OK == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dtb-${{ env.DEVICE }}-${{ env.BUILD_TIME }}
+          path: kernel_workspace/android-kernel/out/arch/${{ env.ARCH }}/boot/dtb.img 
+    
       - name: Upload boot image
         if: env.MAKE_BOOT_IMAGE_IS_OK == 'true'
         uses: actions/upload-artifact@v4
@@ -248,9 +255,8 @@ jobs:
             (cd "$dir" && zip -qr9 "${GITHUB_WORKSPACE}/release/${name}.zip" .)
             echo "packed ${name}.zip"
           done
-          for f in artifacts/*/Image* artifacts/*/boot.img artifacts/*/dtbo.img; do
+          for f in artifacts/*/Image* artifacts/*/boot.img artifacts/*/dtbo.img artifacts/*/dtb.img; do
             [ -f "$f" ] && cp "$f" release/
           done
 
-            Flash the AnyKernel3 zip from a custom recovery.
           files: release/*
